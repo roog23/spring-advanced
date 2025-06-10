@@ -21,19 +21,11 @@ public class Interceptor implements HandlerInterceptor {
     @Override
     public boolean preHandle(HttpServletRequest request, HttpServletResponse response, Object handler) throws Exception {
         String bearerJwt = request.getHeader("Authorization");
-        if (bearerJwt == null) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "JWT 토큰이 필요합니다.");
-            return false;
-        }
-
         String jwt = jwtUtil.substringToken(bearerJwt);
         Claims claims = jwtUtil.extractClaims(jwt);
-        if (claims == null) {
-            response.sendError(HttpServletResponse.SC_BAD_REQUEST, "잘못된 JWT 토큰입니다.");
-            return false;
-        }
-
+        String userId = claims.getSubject();
         UserRole userRole = UserRole.valueOf(claims.get("userRole", String.class));
+
         if (userRole.equals(UserRole.USER)) {
             response.sendError(HttpServletResponse.SC_FORBIDDEN, "관리자 권한이 없습니다.");
             return false;
@@ -43,6 +35,7 @@ public class Interceptor implements HandlerInterceptor {
         LocalDateTime accessTime = LocalDateTime.now();
         log.info("URL : {}", requestURI);
         log.info("start : {}", accessTime);
+        log.info("userId : {}", userId);
         return true;
     }
 }
