@@ -1,6 +1,7 @@
 package org.example.expert.domain.comment.service;
 
 import org.example.expert.domain.comment.dto.request.CommentSaveRequest;
+import org.example.expert.domain.comment.dto.response.CommentResponse;
 import org.example.expert.domain.comment.dto.response.CommentSaveResponse;
 import org.example.expert.domain.comment.entity.Comment;
 import org.example.expert.domain.comment.repository.CommentRepository;
@@ -10,14 +11,18 @@ import org.example.expert.domain.todo.entity.Todo;
 import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.entity.User;
 import org.example.expert.domain.user.enums.UserRole;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 
+import java.util.List;
 import java.util.Optional;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
@@ -69,5 +74,30 @@ class CommentServiceTest {
 
         // then
         assertNotNull(result);
+    }
+
+    @Test
+    @DisplayName("게시글에 있는 댓글 목록이 정상 조회가 되는지 테스트")
+    void getComments() {
+        //given
+        long todoId = 1L;
+        User user = new User("user1@example.com", "password", UserRole.USER);
+        ReflectionTestUtils.setField(user, "id", 1L);
+        Todo todo = new Todo("Title", "Contents", "Sunny", user);
+        ReflectionTestUtils.setField(todo, "id", todoId);
+
+        Comment comment1 = new Comment("contents1", user, todo);
+        Comment comment2 = new Comment("contents2", user, todo);
+        List<Comment> commentList = List.of(comment1, comment2);
+
+        given(commentRepository.findByTodoIdWithUser(todoId)).willReturn(commentList);
+
+        //when
+        List<CommentResponse> comments = commentService.getComments(todoId);
+
+        //then
+        assertThat(comments.size()).isEqualTo(2);
+        assertThat(comments.get(0).getContents()).isEqualTo("contents1");
+
     }
 }

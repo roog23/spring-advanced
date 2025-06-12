@@ -12,6 +12,7 @@ import org.example.expert.domain.todo.repository.TodoRepository;
 import org.example.expert.domain.user.entity.User;
 import org.example.expert.domain.user.enums.UserRole;
 import org.example.expert.domain.user.repository.UserRepository;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
@@ -25,6 +26,7 @@ import java.util.Optional;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
 class ManagerServiceTest {
@@ -120,5 +122,32 @@ class ManagerServiceTest {
         assertNotNull(response);
         assertEquals(managerUser.getId(), response.getUser().getId());
         assertEquals(managerUser.getEmail(), response.getUser().getEmail());
+    }
+
+    @Test
+    @DisplayName("manager 삭제가 정상적으로 동작하는지 테스트")
+    void deleteManager() {
+        //given
+        long userId = 1L;
+        long todoId = 1L;
+        long managerId = 1L;
+
+        User user = new User("a@a.com","1234", UserRole.USER);
+        ReflectionTestUtils.setField(user, "id", userId);
+        Todo todo = new Todo("title","contents", "sunny", user);
+        ReflectionTestUtils.setField(todo, "id", todoId);
+        Manager manager = new Manager(user, todo);
+        ReflectionTestUtils.setField(manager, "id", managerId);
+
+
+        given(userRepository.findById(userId)).willReturn(Optional.of(user));
+        given(todoRepository.findById(todoId)).willReturn(Optional.of(todo));
+        given(managerRepository.findById(managerId)).willReturn(Optional.of(manager));
+
+        //when
+        managerService.deleteManager(userId, todoId, managerId);
+
+        //then
+        verify(managerRepository).delete(manager);
     }
 }
